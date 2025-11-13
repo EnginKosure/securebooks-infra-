@@ -4,8 +4,6 @@ metadata:
   name: apps
   namespace: flux-system
 
-namespace: flux-system
-
 resources:
   - flux-system/
   - ../../kustomize/dev/
