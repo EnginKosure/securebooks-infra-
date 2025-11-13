@@ -7,6 +7,13 @@ namespace: app
 
 resources:
   - ../base
+  - ../../clusters/dev/helm-release.yaml
+  - ../../secrets/external-secret.yaml
+  - ../../policies/calico/network-policy.yaml
+  - ../../istio/gateway.yaml
+  - ../../policies/kyverno/require-app-label.yaml
+  - ../../policies/kyverno/disallow-privileged.yaml
+  - ../../policies/kyverno/require-resource-limits.yaml
 
 replicas:
   - name: securebooks

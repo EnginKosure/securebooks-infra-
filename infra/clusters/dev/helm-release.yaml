@@ -28,7 +28,7 @@ spec:
   values:
     replicaCount: 2
     image:
-      repository: ghcr.io/$GITHUB_USER/securebooks
+      repository: ghcr.io/enginkosure/securebooks
       pullPolicy: IfNotPresent
       tag: main-latest
     service:
