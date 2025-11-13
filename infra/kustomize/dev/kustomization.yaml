@@ -32,7 +32,6 @@ patchesStrategicMerge:
 
 configMapGenerator:
   - name: securebooks-config
-    behavior: merge
     literals:
       - LOG_LEVEL=DEBUG
       - ENVIRONMENT=dev
