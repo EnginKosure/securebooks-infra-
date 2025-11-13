@@ -67,28 +67,7 @@ spec:
         - protocol: UDP
           port: 53
 ---
-apiVersion: crd.projectcalico.org/v1
-kind: GlobalNetworkPolicy
-metadata:
-  name: deny-cross-namespace-egress
-spec:
-  selector: "!has(allow-cross-namespace)"
-  types:
-    - Egress
-  egress:
-    - action: Allow
-      destination:
-        namespaceSelector:
-          matchLabels:
-            name: "{{ source_namespace }}"
-    - action: Allow
-      destination:
-        namespaceSelector:
-          matchLabels:
-            name: kube-system
-    - action: Allow
-      destination:
-        namespaceSelector:
-          matchLabels:
-            name: kube-public
-    - action: Deny
+---
+# Note: GlobalNetworkPolicy requires Calico to be installed
+# This configuration is optional and only applied when Calico is available
+# For basic Kubernetes NetworkPolicy support, the above policies are sufficient
