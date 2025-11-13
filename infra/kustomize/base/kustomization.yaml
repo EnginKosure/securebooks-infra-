@@ -11,20 +11,10 @@ commonAnnotations:
   description: "SecureBooks application - secure FastAPI + PostgreSQL deployment"
 
 resources:
-  - ../../helm/securebooks
+  - ../helm-release.yaml
   - ../secrets/external-secret.yaml
   - ../policies/calico/network-policy.yaml
   - ../istio/gateway.yaml
   - ../policies/kyverno/require-app-label.yaml
   - ../policies/kyverno/disallow-privileged.yaml
   - ../policies/kyverno/require-resource-limits.yaml
-
-helmCharts:
-  - name: securebooks
-    repo: oci://local-helm
-    releaseName: securebooks
-    version: 1.0.0
-    values:
-      replicaCount: 2
-      image:
-        tag: latest
