@@ -1,0 +1,228 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+data:
+  prometheus.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki:3100
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+data:
+  securebooks-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "SecureBooks Application Dashboard",
+        "tags": ["securebooks", "application"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "HTTP Requests Rate",
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total[5m])) by (method, status)"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 2,
+            "title": "Request Latency (p95)",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 3,
+            "title": "Active Connections",
+            "targets": [
+              {
+                "expr": "sum(http_connections_active)"
+              }
+            ],
+            "type": "stat"
+          },
+          {
+            "id": 4,
+            "title": "Pod Memory Usage",
+            "targets": [
+              {
+                "expr": "sum(container_memory_usage_bytes{pod=~\"securebooks.*\"}) by (pod)"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 5,
+            "title": "Pod CPU Usage",
+            "targets": [
+              {
+                "expr": "sum(rate(container_cpu_usage_seconds_total{pod=~\"securebooks.*\"}[5m])) by (pod)"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 6,
+            "title": "Deployment Replica Status",
+            "targets": [
+              {
+                "expr": "kube_deployment_status_replicas{deployment=\"securebooks\"}"
+              }
+            ],
+            "type": "stat"
+          },
+          {
+            "id": 7,
+            "title": "Error Rate",
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 8,
+            "title": "Database Connection Pool",
+            "targets": [
+              {
+                "expr": "sum(pg_stat_activity_count) by (state)"
+              }
+            ],
+            "type": "graph"
+          }
+        ]
+      }
+    }
+
+  infrastructure-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "Infrastructure Dashboard",
+        "tags": ["infrastructure", "cluster"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Node CPU Usage",
+            "targets": [
+              {
+                "expr": "sum(rate(node_cpu_seconds_total[5m])) by (instance)"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 2,
+            "title": "Node Memory Usage",
+            "targets": [
+              {
+                "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 3,
+            "title": "Disk Usage",
+            "targets": [
+              {
+                "expr": "(1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 4,
+            "title": "Network I/O",
+            "targets": [
+              {
+                "expr": "rate(node_network_transmit_bytes_total[5m])"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 5,
+            "title": "Running Pods",
+            "targets": [
+              {
+                "expr": "sum(kube_pod_status_phase{phase=\"Running\"}) by (namespace)"
+              }
+            ],
+            "type": "stat"
+          }
+        ]
+      }
+    }
+
+  security-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "Security Dashboard",
+        "tags": ["security", "monitoring"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Falco Alerts",
+            "targets": [
+              {
+                "expr": "sum(rate(falco_alerts_total[5m])) by (priority)"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 2,
+            "title": "Kyverno Policy Violations",
+            "targets": [
+              {
+                "expr": "sum(kyverno_policy_results_total{policy_result=\"fail\"}) by (policy)"
+              }
+            ],
+            "type": "stat"
+          },
+          {
+            "id": 3,
+            "title": "Image Vulnerabilities",
+            "targets": [
+              {
+                "expr": "sum(container_image_vulnerabilities) by (severity)"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "id": 4,
+            "title": "Network Policy Denials",
+            "targets": [
+              {
+                "expr": "sum(rate(calico_denied_connections[5m])) by (policy)"
+              }
+            ],
+            "type": "graph"
+          }
+        ]
+      }
+    }

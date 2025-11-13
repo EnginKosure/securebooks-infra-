@@ -1,0 +1,64 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resource-limits
+  namespace: kyverno
+spec:
+  validationFailureAction: audit  # Docker Desktop: audit mode only
+  background: true
+  rules:
+    - name: validate-cpu-memory-requests
+      match:
+        resources:
+          kinds:
+            - Pod
+            - Deployment
+            - StatefulSet
+            - DaemonSet
+          excludeResources:
+            namespaces:
+              - kube-system
+              - kube-public
+              - flux-system  # Allow Flux components to bypass for Docker Desktop
+      validate:
+        message: "CPU and memory requests and limits are required."
+        pattern:
+          spec:
+            =(initContainers):
+              - resources:
+                  requests:
+                    memory: "?*"
+                    cpu: "?*"
+                  limits:
+                    memory: "?*"
+                    cpu: "?*"
+            containers:
+              - resources:
+                  requests:
+                    memory: "?*"
+                    cpu: "?*"
+                  limits:
+                    memory: "?*"
+                    cpu: "?*"
+
+    - name: validate-memory-limits
+      match:
+        resources:
+          kinds:
+            - Pod
+            - Deployment
+            - StatefulSet
+            - DaemonSet
+          excludeResources:
+            namespaces:
+              - kube-system
+              - kube-public
+              - flux-system
+      validate:
+        message: "Memory limits recommended for container resource management."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  limits:
+                    memory: "?*"

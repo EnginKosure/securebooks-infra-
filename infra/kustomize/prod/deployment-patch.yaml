@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: securebooks
+spec:
+  replicas: 5
+  template:
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - securebooks
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: securebooks
+          env:
+            - name: ENVIRONMENT
+              value: prod
+            - name: LOG_LEVEL
+              value: WARNING

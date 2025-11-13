@@ -1,0 +1,17 @@
+apiVersion: v2
+name: securebooks
+description: A Helm chart for SecureBooks FastAPI application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/securebooks/securebooks-app
+sources:
+  - https://github.com/securebooks/securebooks-app
+maintainers:
+  - name: SecureBooks Team
+    email: team@securebooks.local
+keywords:
+  - fastapi
+  - postgres
+  - kubernetes
+  - security

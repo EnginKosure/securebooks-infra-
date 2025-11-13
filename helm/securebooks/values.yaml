@@ -1,0 +1,134 @@
+# Default values for securebooks Helm chart
+
+replicaCount: 1  # Docker Desktop: reduced for resource efficiency
+
+image:
+  repository: ghcr.io/securebooks/securebooks
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Docker Desktop: use imagePullSecrets if using private registry
+# imagePullSecrets:
+#   - name: ghcr-secret
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: "istio"
+  annotations: {}
+  hosts:
+    - host: securebooks.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 300m        # Docker Desktop: reduced from 500m
+    memory: 256Mi    # Docker Desktop: reduced from 512Mi
+  requests:
+    cpu: 100m        # Docker Desktop: reduced from 250m
+    memory: 128Mi    # Docker Desktop: reduced from 256Mi
+
+autoscaling:
+  enabled: false     # Docker Desktop: disable HPA, not needed for local dev
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Database configuration
+postgres:
+  host: postgres
+  port: 5432
+  database: securebooks
+  # Username and password come from ExternalSecret
+  userSecret:
+    name: securebooks-db
+    userKey: POSTGRES_USER
+    passwordKey: POSTGRES_PASSWORD
+
+# Environment variables
+env:
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: securebooks
+
+# ConfigMap for application configuration
+configMap:
+  enabled: true
+  name: securebooks-config
+  data:
+    LOG_LEVEL: INFO
+    DEBUG: "false"
+
+# Health check configuration
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Labels
+labels:
+  app: securebooks
+  version: v1
+
+# Network Policy
+networkPolicy:
+  enabled: true

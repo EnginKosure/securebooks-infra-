@@ -1,0 +1,117 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: securebooks
+  namespace: app
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: securebooks
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: securebooks-alerts
+  namespace: app
+spec:
+  groups:
+    - name: securebooks
+      interval: 30s
+      rules:
+        - alert: SecureBooksHighErrorRate
+          expr: |
+            (sum(rate(http_requests_total{job="securebooks", status=~"5.."}[5m])) by (instance)) /
+            (sum(rate(http_requests_total{job="securebooks"}[5m])) by (instance)) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "SecureBooks high error rate detected"
+            description: "Error rate > 5% for {{ $labels.instance }}"
+
+        - alert: SecureBooksHighLatency
+          expr: |
+            histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "SecureBooks high latency detected"
+            description: "p95 latency > 1s for SecureBooks"
+
+        - alert: SecureBooksDownReplicas
+          expr: |
+            kube_deployment_status_replicas_unavailable{deployment="securebooks"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "SecureBooks has unavailable replicas"
+            description: "{{ $value }} replica(s) unavailable"
+
+        - alert: SecureBooksMemoryUsage
+          expr: |
+            (container_memory_usage_bytes{pod=~"securebooks.*"} / container_spec_memory_limit_bytes{pod=~"securebooks.*"}) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "SecureBooks memory usage high"
+            description: "Memory usage > 80% for {{ $labels.pod }}"
+
+        - alert: SecureBooksCPUUsage
+          expr: |
+            (rate(container_cpu_usage_seconds_total{pod=~"securebooks.*"}[5m]) / container_spec_cpu_quota{pod=~"securebooks.*"}) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "SecureBooks CPU usage high"
+            description: "CPU usage > 80% for {{ $labels.pod }}"
+
+        - alert: KyvernoViolations
+          expr: |
+            increase(kyverno_policy_results_total{policy_result="fail"}[5m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Kyverno policy violations detected"
+            description: "Kyverno policy violations increased by {{ $value }}"
+
+        - alert: FalcoAlerts
+          expr: |
+            increase(falco_alerts_total{priority=~"CRITICAL|ERROR"}[5m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Falco security alert"
+            description: "Critical or Error level alert from Falco"
+
+        - alert: PostgreSQLDown
+          expr: |
+            up{job="postgres"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "PostgreSQL is down"
+            description: "PostgreSQL endpoint is unreachable"
+
+        - alert: DiskSpaceLow
+          expr: |
+            (node_filesystem_avail_bytes{fstype=~"ext4|xfs"} / node_filesystem_size_bytes{fstype=~"ext4|xfs"}) < 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Low disk space detected"
+            description: "Less than 10% disk space available on {{ $labels.device }}"

@@ -1,0 +1,48 @@
+- rule: Terminal Shell in Container
+  desc: Detects a shell spawned in a container
+  condition: spawned_process and container and proc.name in (bash, sh, zsh, ksh) and not proc.pname in (sshd, docker)
+  output: "Shell spawned in container (user=%user.name command=%proc.cmdline container=%container.id image=%container.image.repository)"
+  priority: WARNING
+  tags: [container, shell, suspicious]
+
+- rule: Suspicious curl in Container
+  desc: Detects curl command to metadata service endpoints
+  condition: spawned_process and container and proc.name = curl and proc.args contains ("169.254.169.254" or "metadata" or "token")
+  output: "Suspicious curl to metadata endpoint (user=%user.name command=%proc.cmdline container=%container.id)"
+  priority: WARNING
+  tags: [container, suspicious, metadata_access]
+
+- rule: Unauthorized Process
+  desc: Detects unauthorized processes running in container
+  condition: spawned_process and container and proc.name in (nmap, nc, netcat, socat, wget, curl) and user.name != root
+  output: "Unauthorized process execution (user=%user.name process=%proc.name container=%container.id)"
+  priority: CRITICAL
+  tags: [container, suspicious, security]
+
+- rule: File Access to Sensitive Paths
+  desc: Detects unauthorized access to sensitive files
+  condition: open and container and fd.name in (/etc/passwd, /etc/shadow, /etc/sudoers, /root/.ssh, /root/.bash_history)
+  output: "Sensitive file access detected (user=%user.name file=%fd.name container=%container.id)"
+  priority: WARNING
+  tags: [container, sensitive_data]
+
+- rule: Container Escape Attempt
+  desc: Detects potential container escape attempts
+  condition: spawned_process and container and proc.name in (docker, containerd, runc, ctr) and user.name != root
+  output: "Container escape attempt detected (user=%user.name process=%proc.cmdline container=%container.id)"
+  priority: CRITICAL
+  tags: [container, escape, security]
+
+- rule: Suspicious Network Activity
+  desc: Detects suspicious network connections
+  condition: outbound and container and fd.sip = "169.254.169.254"
+  output: "Suspicious network connection to metadata service (container=%container.id connection=%fd.name)"
+  priority: WARNING
+  tags: [network, suspicious]
+
+- rule: Package Manager in Container
+  desc: Detects package manager execution in container
+  condition: spawned_process and container and proc.name in (apt, apt-get, yum, rpm, pip, npm) and not container.privileged
+  output: "Package manager executed in container (user=%user.name process=%proc.name container=%container.id)"
+  priority: NOTICE
+  tags: [container, package_manager]

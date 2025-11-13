@@ -1,0 +1,23 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-app-label
+  namespace: kyverno
+spec:
+  validationFailureAction: audit
+  background: true
+  rules:
+    - name: check-app-label
+      match:
+        resources:
+          kinds:
+            - Deployment
+            - StatefulSet
+            - DaemonSet
+            - Pod
+      validate:
+        message: "Deployments, StatefulSets, DaemonSets, and Pods must have label 'app'."
+        pattern:
+          metadata:
+            labels:
+              app: "?*"

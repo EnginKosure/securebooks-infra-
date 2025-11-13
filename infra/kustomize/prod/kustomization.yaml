@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: securebooks-prod
+
+namespace: app
+
+resources:
+  - ../base
+
+replicas:
+  - name: securebooks
+    count: 5
+
+commonLabels:
+  environment: prod
+  version: v1
+
+commonAnnotations:
+  managed-by: flux
+  environment: production
+  sla: high
+
+patchesJson6902:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: securebooks
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 1024Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 1000m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 512Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 500m
+
+patchesStrategicMerge:
+  - deployment-patch.yaml
+
+configMapGenerator:
+  - name: securebooks-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=WARNING
+      - ENVIRONMENT=prod
+      - DEBUG=false
+      - CACHE_ENABLED=true
