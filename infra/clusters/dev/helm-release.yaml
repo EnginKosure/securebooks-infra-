@@ -59,19 +59,20 @@ spec:
       version: v1
   postRenderers:
     - kustomize:
-        patchesStrategicMerge:
-          - apiVersion: apps/v1
-            kind: Deployment
-            metadata:
+        patches:
+          - target:
+              kind: Deployment
               name: securebooks
-            spec:
-              template:
-                metadata:
-                  labels:
-                    app: securebooks
-                    version: v1
-                spec:
-                  securityContext:
-                    runAsNonRoot: true
-                    runAsUser: 1000
-                    fsGroup: 1000
+            patch: |-
+              - op: add
+                path: /spec/template/metadata/labels/app
+                value: securebooks
+              - op: add
+                path: /spec/template/metadata/labels/version
+                value: v1
+              - op: add
+                path: /spec/template/spec/securityContext
+                value:
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  fsGroup: 1000
