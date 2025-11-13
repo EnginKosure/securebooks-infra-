@@ -27,9 +27,6 @@ commonAnnotations:
   managed-by: flux
   environment: development
 
-patchesStrategicMerge:
-  - deployment-patch.yaml
-
 configMapGenerator:
   - name: securebooks-config
     literals:
