@@ -28,9 +28,9 @@ spec:
   values:
     replicaCount: 2
     image:
-      repository: ghcr.io/enginkosure/securebooks
+      repository: nginx
       pullPolicy: IfNotPresent
-      tag: main-latest
+      tag: latest
     service:
       type: ClusterIP
       port: 8000
