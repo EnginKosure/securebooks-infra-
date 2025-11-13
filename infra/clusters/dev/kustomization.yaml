@@ -9,10 +9,3 @@ namespace: flux-system
 resources:
   - flux-system/
   - ../../kustomize/dev/
-
-commonLabels:
-  app.kubernetes.io/managed-by: flux
-  environment: dev
-
-commonAnnotations:
-  description: "Development environment deployment"
